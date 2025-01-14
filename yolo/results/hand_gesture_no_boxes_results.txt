@@ -1,0 +1,8 @@
+              precision    recall  f1-score   support
+
+        fist       0.00      0.00      0.00         0
+      nofist       0.00      0.00      0.00         0
+
+   micro avg       0.00      0.00      0.00         0
+   macro avg       0.00      0.00      0.00         0
+weighted avg       0.00      0.00      0.00         0
