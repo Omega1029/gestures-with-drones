@@ -1,0 +1,220 @@
+<?xml version="1.0" ?>
+<!--
+  Try inserting a model:
+
+gz service -s /world/empty/create \
+--reqtype gz.msgs.EntityFactory \
+--reptype gz.msgs.Boolean \
+--timeout 300 \
+--req 'sdf: '\
+'"<?xml version=\"1.0\" ?>'\
+'<sdf version=\"1.6\">'\
+'<model name=\"spawned_model\">'\
+'<link name=\"link\">'\
+'<visual name=\"visual\">'\
+'<geometry><sphere><radius>1.0</radius></sphere></geometry>'\
+'</visual>'\
+'<collision name=\"visual\">'\
+'<geometry><sphere><radius>1.0</radius></sphere></geometry>'\
+'</collision>'\
+'</link>'\
+'</model>'\
+'</sdf>" '\
+'pose: {position: {z: 10}} '\
+'name: "new_name" '\
+'allow_renaming: true'
+
+  Then try deleting it:
+
+gz service -s /world/empty/remove \
+--reqtype gz.msgs.Entity \
+--reptype gz.msgs.Boolean \
+--timeout 300 \
+--req 'name: "new_name" type: MODEL'
+
+  Try inserting a light:
+
+gz service -s /world/empty/create --reqtype gz.msgs.EntityFactory --reptype gz.msgs.Boolean --timeout 300 --req 'sdf: '\
+'"<?xml version=\"1.0\" ?>'\
+'<sdf version=\"1.6\">'\
+'<light name=\"spawned_light\" type=\"directional\">'\
+'<pose>0 0 10 0.1 1.0 0</pose>'\
+'</light>'\
+'</sdf>"'
+
+  Then try deleting it:
+
+gz service -s /world/empty/remove \
+--reqtype gz.msgs.Entity \
+--reptype gz.msgs.Boolean \
+--timeout 300 \
+--req 'name: "spawned_light" type: LIGHT'
+
+  Insert a light using a message and allow_renaming:
+
+gz service -s /world/empty/create \
+--reqtype gz.msgs.EntityFactory \
+--reptype gz.msgs.Boolean \
+--timeout 300 \
+--req 'allow_renaming: true, light: {name: "spawned_light", type: 2, diffuse: {r: 1}}'
+
+-->
+<sdf version="1.6">
+  <world name="empty">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin
+      filename="gz-sim-physics-system"
+      name="gz::sim::systems::Physics">
+    </plugin>
+    <plugin
+      filename="gz-sim-user-commands-system"
+      name="gz::sim::systems::UserCommands">
+    </plugin>
+    <plugin
+      filename="gz-sim-scene-broadcaster-system"
+      name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+    <plugin
+      filename="gz-sim-contact-system"
+      name="gz::sim::systems::Contact">
+    </plugin>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- DRONE -->
+
+    <model name="parrot_bebop_2">
+    <static>false</static>
+    <pose>0 0 0.062656 0 0 0</pose>
+
+    <!-- Main link -->
+    <link name="body">
+      <inertial>
+        <mass>1.503</mass> <!-- kg -->
+        <inertia> <!-- kg.m^2 -->
+          <ixx>1.805e-3</ixx>
+          <ixy>-8.619e-7</ixy>
+          <iyy>1.764e-3</iyy>
+          <ixz>1.555e-5</ixz>
+          <iyz>3.595e-7</iyz>
+          <izz>3.328e-3</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <collision name="collision">
+        <pose>-0.00424 0.00014 -0.00595 0 0 0</pose>
+        <geometry>
+          <box><size>0.316618 0.330564 0.089582</size></box>
+        </geometry>
+        <max_contacts>10</max_contacts>
+        <surface>
+          <bounce>
+            <restitution_coefficient>0.828</restitution_coefficient>
+            <threshold>0</threshold>
+          </bounce>
+          <friction>
+            <ode>
+              <mu>10</mu>
+              <mu2>5</mu2>
+              <fdir1>0 0 0</fdir1>
+              <slip1>0.0</slip1>
+              <slip2>0.0</slip2>
+            </ode>
+          </friction>
+          <contact>
+            <ode>
+              <kp>10000.0</kp>
+              <kd>10.0</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0</min_depth>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+      <visual name="hull">
+        <geometry>
+          <mesh>
+              <uri>model://drone/meshes/hull.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="propeller_rr">
+        <pose>-0.09035 -0.11423 -0.00501 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://drone/meshes/propeller_rr.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="propeller_rl">
+        <pose>-0.09035 0.11452 -0.00501 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://drone/meshes/propeller_rl.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="propeller_fr">
+        <pose>0.08456 -0.11435 -0.00501 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://drone/meshes/propeller_fr.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name="propeller_fl">
+        <pose>0.08456 0.11463 -0.00501 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://drone/meshes/propeller_fl.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+
+  </model>
+
+  </world>
+</sdf>
