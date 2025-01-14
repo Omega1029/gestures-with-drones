@@ -1,0 +1,2 @@
+1.  gz sim -v 4 -g
+2.  gz sim -v 4 drone/worlds/multicoptercontrol.sdf -s
