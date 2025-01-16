@@ -1,0 +1,8 @@
+*.pdf
+*.pptx
+.DS_STORE
+.idea*
+*.keras
+*.pickle
+datasets*
+myDatasets*
