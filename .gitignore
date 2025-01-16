@@ -1,8 +1,10 @@
+.DS_Store
+.idea/
 *.pdf
 *.pptx
-.DS_STORE
-.idea*
-*.keras
-*.pickle
 datasets*
 myDatasets*
+models*
+*.keras
+*.pickle
+yolo

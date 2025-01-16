@@ -1,0 +1,17 @@
+# YOLO Dataset Configuration
+
+# Absolute path to training and validation images
+train: /home/justin_williams1/GestureRecognition/datasets/images/train  # Absolute path to training images
+val: /home/justin_williams1/GestureRecognition/datasets/images/val    # Absolute path to validation images
+
+# Absolute path to training and validation labels
+train_labels: /home/justin_williams1/GestureRecognition/datasets/labels/train  # Absolute path to training labels
+val_labels: /home/justin_williams1/GestureRecognition/datasets/labels/val      # Absolute path to validation labels
+
+# Number of classes
+nc: 19  # Change this to the number of classes in your dataset
+
+# List of class names
+names: ['call', 'dislike', 'fist', 'four', 'like', 'mute', 'ok', 'one', 'palm', 'peace',
+        'peace_inverted', 'rock', 'stop', 'stop_inverted', 'three', 'three2', 'two_up',
+        'two_up_inverted', 'no_gesture']

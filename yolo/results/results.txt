@@ -1,0 +1,9 @@
+Mean Average Precision (mAP): 0.9432
+              precision    recall  f1-score   support
+
+ humanabsent       0.85      0.92      0.88        73
+humanpresent       0.94      0.89      0.92       112
+
+    accuracy                           0.90       185
+   macro avg       0.90      0.91      0.90       185
+weighted avg       0.91      0.90      0.90       185
