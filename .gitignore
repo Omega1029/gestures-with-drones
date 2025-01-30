@@ -8,3 +8,4 @@ models*
 *.keras
 *.pickle
 yolo
+test.py

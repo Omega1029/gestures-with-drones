@@ -1,0 +1,27 @@
+# Custom YOLOv8 Model with CSPDarknet53 Backbone
+
+nc: 19  # Number of classes
+depth_multiple: 1.0  # Depth scaling factor
+width_multiple: 1.0  # Width scaling factor
+
+# Backbone: CSPDarknet53 (simplified for testing)
+backbone:
+  [
+    [ -1, 1, Conv, [32, 3, 1] ],  # Initial Conv layer
+    [ -1, 1, Conv, [64, 3, 2] ],  # Downsample with Conv
+    [ -1, 1, C3, [64] ],          # CSP Bottleneck with 64 channels
+    [ -1, 1, Conv, [128, 3, 2] ],  # Downsample with Conv
+    [ -1, 1, C3, [128] ],         # CSP Bottleneck with 128 channels
+    [ -1, 1, Conv, [256, 3, 2] ],  # Downsample with Conv
+    [ -1, 1, C3, [256] ],         # CSP Bottleneck with 256 channels
+    [ -1, 1, Conv, [512, 3, 2] ],  # Downsample with Conv
+    [ -1, 1, C3, [512] ],         # CSP Bottleneck with 512 channels
+    [ -1, 1, SPP, [512, [5, 9, 13]] ],  # Spatial Pyramid Pooling layer
+    [ -1, 1, Conv, [512, 1, 1] ],  # Final Conv layer to reduce channels
+  ]
+
+# Head: Detect Layer with Correct Arguments
+head:
+  [
+    [ [-1], 1, Detect, [nc] ],  # Detection layer with multi-scale anchors
+  ]

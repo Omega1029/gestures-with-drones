@@ -1,5 +1,6 @@
 from ultralytics import YOLO
 import cv2
+import streamlit as st
 
 # Load a pretrained YOLO11n model
 model = YOLO("best.pt")
@@ -14,7 +15,8 @@ for orig in results:
     # frame is a frame from the video capture and the results object provides annotations
     frame = orig.plot()
     # Display the frame with annotations (bounding boxes, labels, etc.)
-    cv2.imshow("YOLOv8 Webcam Inference", frame)
+    st.image(frame, channels="BGR")
+    #cv2.imshow("YOLOv8 Webcam Inference", frame)
     labels = orig.names  # This contains class names for each detection (mapping from class ids to class names)
 
     # Iterate over the detected boxes
