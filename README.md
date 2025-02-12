@@ -34,10 +34,28 @@ This project focuses on controlling drones using hand gestures, leveraging compu
    - Set up your camera to capture hand gestures.
 
 2. **Run the Application**:
+
+   ### A) Running Just the YOLO Model
    ```bash
-   python main.py
+   cd yolo
+   python3 testing_yolov8_model.py
    ```
-   Replace `main.py` with the appropriate script name if different.
+   
+   ### B) Running the Drone in Gazebo
+   **Note**: Gazebo 7 must be installed first.
+   ```bash
+   cd drone
+   gz sim -v 4 -g
+   gz sim -v 4 drone/worlds/multicoptercontrol.sdf -s
+   python3 drone_with_gestures.py
+   ```
+   
+   ### C) Running with CoDrone EDU
+   **Note**: You must set up CoDrone EDU.
+   ```bash
+   cd drone
+   python3 codrone_edu_with_gestures.py
+   ```
 
 3. **Perform Gestures**:
    Use predefined hand gestures to control the drone. For example:
@@ -66,9 +84,10 @@ This project is licensed under the MIT License. See the `LICENSE` file for more 
 
 ## Acknowledgments
 
-- [sooryamsharma/Hand-Gesture-Controlled-Drone](https://github.com/sooryamsharma/Hand-Gesture-Controlled-Drone): Inspiration for gesture-controlled drone interfaces.
-- [kinivi/tello-gesture-control](https://github.com/kinivi/tello-gesture-control): Reference for controlling DJI Tello using hand gestures.
-- [SubhiH/HandGesturesDroneController](https://github.com/SubhiH/HandGesturesDroneController): Insights into image processing algorithms for gesture recognition.
+- [hukenovs/hagrid](https://github.com/hukenovs/hagrid)
+- [Faster R-CNNs - PyImageSearch](https://pyimagesearch.com/2023/11/13/faster-r-cnns/)
+- [Object Tracking with YOLOv8 and Python - PyImageSearch](https://pyimagesearch.com/2024/06/17/object-tracking-with-yolov8-and-python/)
+- [e2eet-skeleton-based-hgr-using-data-level-fusion](https://github.com/outsiders17711/e2eet-skeleton-based-hgr-using-data-level-fusion)
 
 ## Contact
 
