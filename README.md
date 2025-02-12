@@ -59,10 +59,15 @@ This project focuses on controlling drones using hand gestures, leveraging compu
 
 3. **Perform Gestures**:
    Use predefined hand gestures to control the drone. For example:
-   - **Open Palm**: Take off
-   - **Closed Fist**: Land
-   - **Swipe Left**: Move left
-   - **Swipe Right**: Move right
+   - **Peace**: Rotate Right
+   - **OK**: Rotate Left
+   - **Palm**: Backward
+   - **Fist**: Forward
+   - **Three**: Right
+   - **Two Up**: Left
+   - **Like**: Up
+   - **Dislike**: Down
+   - **Mute**: Hover
 
    *(Customize these gestures in the configuration file as needed.)*
 
