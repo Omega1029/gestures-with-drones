@@ -10,3 +10,4 @@ models*
 yolo
 test.py
 ros_practice
+__pycache__

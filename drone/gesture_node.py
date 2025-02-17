@@ -153,12 +153,12 @@ model = YOLO(os.path.join(os.path.abspath(".."), configs.YOLO_MODEL))
 rclpy.init(args=None)
 node = Talker()
 #rclpy.spin(node)
-node.publish_command("pair")
 
-#input("Ready To Go!!")
+
 # Start video capture
 cap = cv2.VideoCapture(0)
 node.publish_command("takeoff")
+input("Drones Paired")
 try:
     results = model(source=0, stream=True)
 

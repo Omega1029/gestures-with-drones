@@ -2,10 +2,11 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Float64
 from codrone_edu.drone import Drone
+import argparse
 
 
 class CoDroneController(Node):
-    def __init__(self):
+    def __init__(self, port = None):
         super().__init__('codrone_controller')
         self.command_subscription = self.create_subscription(
             String,
@@ -14,6 +15,11 @@ class CoDroneController(Node):
             1)
         self.command_subscription
         self.drone = Drone()
+        self.port = port
+        if self.port:
+            self.drone.pair(portname=self.port)
+        else:
+            self.drone.pair()
 
 
     def command_callback(self, msg):
@@ -39,8 +45,7 @@ class CoDroneController(Node):
             self.drone.set_yaw(yaw)
             self.drone.move(2)  # Execute movement
             self.drone.hover(1)
-        elif command == "pair":
-            self.drone.pair()
+
 
         elif command == "stop":
             self.drone.land()
@@ -52,9 +57,9 @@ class CoDroneController(Node):
         stop_command.data = "stop"
         self.command_subscription.publish(stop_command)
 
-def main(args=None):
+def main(args=None, port = None):
     rclpy.init(args=args)
-    node = CoDroneController()
+    node = CoDroneController(port)
     try:
         rclpy.spin(node)  # Will continue until an exception occurs or node shutdown
     except KeyboardInterrupt:  # This will handle Ctrl+C or any other interruption
@@ -70,6 +75,9 @@ def main(args=None):
 
 
 if __name__ == '__main__':
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--port', '-p', type=str, help='The serial port for the CoDrone')
+    args = vars(ap.parse_args())
 
-    main()
+    main(port = args["port"])
 
