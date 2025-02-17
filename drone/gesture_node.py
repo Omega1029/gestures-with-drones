@@ -1,3 +1,6 @@
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String, Float64
 from codrone_edu.drone import *
 import os
 import cv2
@@ -5,11 +8,60 @@ import numpy as np
 import threading
 from ultralytics import YOLO
 import configs
-drone = Drone()
-drone.pair()  # Pair automatically, may not always work
+
+class Talker(Node):
+    def __init__(self):
+        super().__init__('talker')
+        self.command_publisher_ = self.create_publisher(String, 'gesture_command', 10)
+        self.movement_publisher_ = self.create_publisher(String, 'gesture_command', 30)
+        #self.timer = self.create_timer(1.0, self.timer_callback)
+
+    def timer_callback(self):
+        # command = String()
+        # command.data = 'takeoff'
+        # self.command_publisher_.publish(command)
+        # self.get_logger().info(f'Publishing: "{command.data}"')
+        #
+        # movement = String()
+        # movement.data = f"movement, yaw: 0, pitch: 0, roll: 0, " \
+        # f"throttle: 0"
+        # self.movment_publisher_.publish(movement)
+        # self.get_logger().info(f'Publishing: "{movement.yaw}", "{movement.roll}","{movement.pitch}","{movement.throttle}"')
+        return
+
+    def publish_command(self, command_value):
+        command = String()
+        command.data = command_value
+        self.command_publisher_.publish(command)
+        self.get_logger().info(f'Publishing: "{command.data}"')
+
+    def publish_movement(self, movement_value):
+        movement = String()
+        print(movement_value)
+        movement.data = f"movement, yaw: {movement_value['yaw']}, pitch: {movement_value['pitch']}, roll: {movement_value['roll']}, " \
+        f"throttle: {movement_value['throttle']}"
+
+        self.movement_publisher_.publish(movement)
+        self.get_logger().info(
+            f'Publishing: "{movement_value}')
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = Talker()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+
+
+
+
+ # Pair automatically, may not always work
 
 # Speed control
-SPEED = 30
+SPEED = 20
 
 def adjust_speed(gesture):
     """Adjusts the drone's speed based on the detected gesture."""
@@ -52,7 +104,7 @@ gesture_to_string = {
     "mute":"Sounding Buzzer",
     "call":"Ending..."
 }
-
+'''
 def execute_command(gesture):
     """Executes the drone movement based on the gesture asynchronously."""
     adjust_speed(gesture)  # Adjust speed before getting the command
@@ -78,15 +130,35 @@ def execute_command(gesture):
         raise Exception
     else:
         print(f"Speed changed, no direct movement for gesture: {gesture}")
+'''
 
+def execute_command(gesture):
+    """Executes the drone movement based on the gesture asynchronously."""
+    adjust_speed(gesture)  # Adjust speed before getting the command
+
+    if gesture in gesture_to_string:
+        if gesture == "stop":
+            node.publish_movement("stop")
+            return
+        pitch, roll, throttle, yaw = get_gesture_command(gesture)
+        direction = {"yaw":yaw, "pitch":pitch, "roll": roll, "throttle":throttle}
+        #print("Executing Command")
+        node.publish_movement(direction)
+
+
+    else:
+        print(f"Speed changed, no direct movement for gesture: {gesture}")
 # Load YOLO model
 model = YOLO(os.path.join(os.path.abspath(".."), configs.YOLO_MODEL))
+rclpy.init(args=None)
+node = Talker()
+#rclpy.spin(node)
+node.publish_command("pair")
 
+#input("Ready To Go!!")
 # Start video capture
 cap = cv2.VideoCapture(0)
-drone.takeoff()
-drone.hover()
-
+node.publish_command("takeoff")
 try:
     results = model(source=0, stream=True)
 
@@ -111,16 +183,21 @@ try:
         cv2.imshow("Gesture Detection", frame)
         if cv2.waitKey(100) & 0xFF == ord('q'):
             break
+    rclpy.spin_once(node)
 
 except KeyboardInterrupt:
-    drone.land()
-    drone.emergency_stop()
+    pass
+    #drone.land()
+    #drone.emergency_stop()
 except Exception as e:
     print(e)
 finally:
     print("\nLanding due to interruption...")
-    drone.land()
-    drone.emergency_stop()
-    drone.close()
+    #drone.land()
+    #drone.emergency_stop()
+    #drone.close()
+    node.publish_command("stop")
+    node.destroy_node()
+    rclpy.shutdown()
     cap.release()
     cv2.destroyAllWindows()
