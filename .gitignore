@@ -9,3 +9,4 @@ models*
 *.pickle
 yolo
 test.py
+ros_practice
