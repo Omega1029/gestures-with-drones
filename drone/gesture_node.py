@@ -98,48 +98,19 @@ gesture_to_string = {
     "two_up": "Left",
     "like": "Up",
     "dislike": "Down",
-    "stop": "Hover",
+    "stop": "Ending...",
     "four": "Increase Speed by 5",
     "one": "Decrease Speed by 5",
     "mute":"Sounding Buzzer",
-    "call":"Ending..."
+    "call":"Hover"
 }
-'''
-def execute_command(gesture):
-    """Executes the drone movement based on the gesture asynchronously."""
-    adjust_speed(gesture)  # Adjust speed before getting the command
-
-    if gesture in gesture_to_string and gesture not in ["four", "one", "call", "mute"]:  # Ignore speed adjustment gestures
-        pitch, roll, throttle, yaw = get_gesture_command(gesture)
-
-        def run_movement():
-            drone.set_pitch(pitch)
-            drone.set_roll(roll)
-            drone.set_throttle(throttle)
-            drone.set_yaw(yaw)
-            drone.move(2)  # Execute movement
-            drone.hover(1)  # Stop motion
-
-        movement_thread = threading.Thread(target=run_movement)
-        movement_thread.start()
-    elif gesture == "mute":
-        drone.drone_buzzer(400, 300)
-
-    elif gesture == "call":
-        print("STOPPING")
-        raise Exception
-    else:
-        print(f"Speed changed, no direct movement for gesture: {gesture}")
-'''
-
 def execute_command(gesture):
     """Executes the drone movement based on the gesture asynchronously."""
     adjust_speed(gesture)  # Adjust speed before getting the command
 
     if gesture in gesture_to_string:
         if gesture == "stop":
-            node.publish_movement("stop")
-            return
+            raise Exception
         pitch, roll, throttle, yaw = get_gesture_command(gesture)
         direction = {"yaw":yaw, "pitch":pitch, "roll": roll, "throttle":throttle}
         #print("Executing Command")
@@ -158,7 +129,6 @@ node = Talker()
 # Start video capture
 cap = cv2.VideoCapture(0)
 node.publish_command("takeoff")
-input("Drones Paired")
 try:
     results = model(source=0, stream=True)
 
@@ -187,15 +157,11 @@ try:
 
 except KeyboardInterrupt:
     pass
-    #drone.land()
-    #drone.emergency_stop()
 except Exception as e:
     print(e)
 finally:
     print("\nLanding due to interruption...")
-    #drone.land()
-    #drone.emergency_stop()
-    #drone.close()
+
     node.publish_command("stop")
     node.destroy_node()
     rclpy.shutdown()

@@ -1,2 +1,14 @@
 1.  gz sim -v 4 -g
 2.  gz sim -v 4 drone/worlds/multicoptercontrol.sdf -s
+
+
+ROS2 Installation
+https://robostack.github.io/GettingStarted.html
+1. conda create -n ros_env python=3.9
+conda config --env --add channels conda-forge
+# and the robostack-staging channel
+conda config --env --add channels robostack-staging
+# if you want to use Jazzy, also add its own channel:
+conda config --env --add channels robostack-jazzy
+# remove the defaults channel just in case, this might return an error if it is not in the list which is ok
+conda config --env --remove channels defaults
