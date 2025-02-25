@@ -61,7 +61,7 @@ class CoDroneController(Node):
         elif command == "stop":
             print("Stored Position :{} \n Current Position: {}".format(self.stored_position[1:], self.drone.get_position_data()[1:]))
             self.drone.hover(2)
-            self.return_home()
+            #self.return_home()
             self.drone.land()
             self.drone.emergency_stop()
             #self.drone.close()
