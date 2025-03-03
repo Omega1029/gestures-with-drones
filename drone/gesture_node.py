@@ -1,97 +1,69 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String, Float64
+from std_msgs.msg import String
 from codrone_edu.drone import *
 import os
 import cv2
 import numpy as np
-import threading
 from ultralytics import YOLO
 import configs
 
 class Talker(Node):
     def __init__(self):
         super().__init__('talker')
-        self.command_publisher_ = self.create_publisher(String, 'gesture_command', 10)
-        self.movement_publisher_ = self.create_publisher(String, 'gesture_command', 30)
-        #self.timer = self.create_timer(1.0, self.timer_callback)
+        self.selected_drone = "drone1"  # Default drone
+        self.command_publisher_ = self.create_publisher(String, f'/{self.selected_drone}', 10)
+        self.movement_publisher_ = self.create_publisher(String, f'/{self.selected_drone}', 30)
 
-    def timer_callback(self):
-        # command = String()
-        # command.data = 'takeoff'
-        # self.command_publisher_.publish(command)
-        # self.get_logger().info(f'Publishing: "{command.data}"')
-        #
-        # movement = String()
-        # movement.data = f"movement, yaw: 0, pitch: 0, roll: 0, " \
-        # f"throttle: 0"
-        # self.movment_publisher_.publish(movement)
-        # self.get_logger().info(f'Publishing: "{movement.yaw}", "{movement.roll}","{movement.pitch}","{movement.throttle}"')
-        return
+    def update_selected_drone(self, drone_id):
+        """Updates the selected drone based on gesture."""
+        self.selected_drone = f'{drone_id}'
+        self.command_publisher_ = self.create_publisher(String, f'/{self.selected_drone}', 10)
+        self.movement_publisher_ = self.create_publisher(String, f'/{self.selected_drone}', 30)
+        self.get_logger().info(f'Selected {self.selected_drone}')
 
     def publish_command(self, command_value):
         command = String()
         command.data = command_value
         self.command_publisher_.publish(command)
-        self.get_logger().info(f'Publishing: "{command.data}"')
+        self.get_logger().info(f'Publishing: "{command.data}" to {self.selected_drone}')
 
     def publish_movement(self, movement_value):
         movement = String()
-        print(movement_value)
         movement.data = f"movement, yaw: {movement_value['yaw']}, pitch: {movement_value['pitch']}, roll: {movement_value['roll']}, " \
-        f"throttle: {movement_value['throttle']}"
-
+                        f"throttle: {movement_value['throttle']}"
         self.movement_publisher_.publish(movement)
-        self.get_logger().info(
-            f'Publishing: "{movement_value}')
+        self.get_logger().info(f'Publishing: "{movement.data}" to {self.selected_drone}')
 
-
-def main(args=None):
-    rclpy.init(args=args)
-    node = Talker()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
-
-
-
-
-
-
- # Pair automatically, may not always work
-
-# Speed control
-SPEED = 20
+SPEED = 30
 
 def adjust_speed(gesture):
-    """Adjusts the drone's speed based on the detected gesture."""
     global SPEED
     if gesture == "four":
         SPEED = min(SPEED + 5, 90)
         print(f"Speed increased to {SPEED}")
     elif gesture == "one":
-        SPEED = max(20, SPEED - 5)  # Prevents SPEED from going below 5
+        SPEED = max(20, SPEED - 5)
         print(f"Speed decreased to {SPEED}")
 
-
 def get_gesture_command(gesture):
-    """Dynamically returns the movement tuple based on the updated SPEED."""
     gesture_to_cmd = {
-        "like": (0, 0, SPEED, 0),  # Up
-        "dislike": (0, 0, -SPEED, 0),  # Down
-        "fist": (-SPEED, 0, 0, 0),  # Backward
-        "palm": (SPEED, 0, 0, 0),  # Forward
-        "three": (0, SPEED, 0, 0),  # Right
-        "two_up": (0, -SPEED, 0, 0),  # Left
-        "peace": (0, 0, 0, SPEED),  # Rotate Right
-        "ok": (0, 0, 0, -SPEED),  # Rotate Left
-        "stop": (0, 0, 0, 0),  # Hover
+        "like": (0, 0, SPEED, 0),
+        "dislike": (0, 0, -SPEED, 0),
+        "fist": (-SPEED, 0, 0, 0),
+        "palm": (SPEED, 0, 0, 0),
+        "three": (0, SPEED, 0, 0),
+        "two_up": (0, -SPEED, 0, 0),
+        "peace": (0, 0, 0, SPEED),
+        "ok": (0, 0, 0, -SPEED),
+        "stop": (0, 0, 0, 0),
     }
-    return gesture_to_cmd.get(gesture, (0, 0, 0, 0))  # Default to hover
+    return gesture_to_cmd.get(gesture, (0, 0, 0, 0))
+
 
 gesture_to_string = {
-    "peace": "Rotate Right",
-    "ok": "Rotate Left",
+    "peace": "Rotate Left",
+    "ok": "Rotate Right",
     "fist": "Backward",
     "palm": "Forward",
     "three": "Right",
@@ -100,38 +72,46 @@ gesture_to_string = {
     "dislike": "Down",
     "stop": "Ending...",
     "four": "Increase Speed by 5",
-    "one": "Decrease Speed by 5",
-    "mute":"Sounding Buzzer",
-    "call":"Hover"
-}
-def execute_command(gesture):
-    """Executes the drone movement based on the gesture asynchronously."""
-    adjust_speed(gesture)  # Adjust speed before getting the command
+    "mute": "Sounding Buzzer",
+    "call": "Hover",
 
-    if gesture in gesture_to_string:
-        if gesture == "stop":
-            raise Exception
+    # Drone Selection
+    "rock": "Select Drone 1",
+    "peace_inverted": "Select Drone 2",
+    "stop_inverted": "Select Drone 3"
+}
+
+gesture_to_drone = {
+    "rock": "drone1",
+    "peace_inverted": "drone2",
+    "stop_inverted": "drone3"
+}
+
+
+def execute_command(gesture):
+    if gesture == "stop":
+        print("Stopping all drones...")
+        node.publish_command("stop")  # Broadcast stop command to all drones
+        return
+
+    elif gesture in gesture_to_drone:
+        node.update_selected_drone(gesture_to_drone[gesture])
+
+    elif gesture in gesture_to_string:
         pitch, roll, throttle, yaw = get_gesture_command(gesture)
-        direction = {"yaw":yaw, "pitch":pitch, "roll": roll, "throttle":throttle}
-        #print("Executing Command")
+        direction = {"yaw": yaw, "pitch": pitch, "roll": roll, "throttle": throttle}
         node.publish_movement(direction)
 
 
-    else:
-        print(f"Speed changed, no direct movement for gesture: {gesture}")
-# Load YOLO model
+
 model = YOLO(os.path.join(os.path.abspath(".."), configs.YOLO_MODEL))
 rclpy.init(args=None)
 node = Talker()
-#rclpy.spin(node)
-
-
-# Start video capture
 cap = cv2.VideoCapture(0)
-node.publish_command("takeoff")
+#node.publish_command("takeoff")
+
 try:
     results = model(source=0, stream=True)
-
     for orig in results:
         frame = orig.plot()
         labels = orig.names
@@ -143,12 +123,11 @@ try:
             print(f"Detected: {label}")
 
             if label in gesture_to_string:
-
                 gesture_text = f"{label}: {gesture_to_string[label]}"
                 print(f"Executing gesture: {gesture_text}")
-
-                cv2.putText(frame, gesture_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 10, (0, 0, 0), 2, cv2.LINE_AA)
+                cv2.putText(frame, gesture_text, (50, 75), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 0), 4, cv2.LINE_AA)
                 execute_command(label)
+
 
         cv2.imshow("Gesture Detection", frame)
         if cv2.waitKey(100) & 0xFF == ord('q'):
@@ -161,7 +140,6 @@ except Exception as e:
     print(e)
 finally:
     print("\nLanding due to interruption...")
-
     node.publish_command("stop")
     node.destroy_node()
     rclpy.shutdown()
