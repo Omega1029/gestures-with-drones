@@ -1,4 +1,3 @@
-
 from codrone_edu.drone import *
 import os
 import cv2
@@ -6,41 +5,60 @@ import numpy as np
 import threading
 from ultralytics import YOLO
 import configs
-
 drone = Drone()
-drone.pair()  # pair automatically, may not always work
+drone.pair()  # Pair automatically, may not always work
 
-SPEED = 20
-gesture_to_cmd = {
-    "like": (0, 0, SPEED, 0),  # Up
-    "dislike": (0, 0, -SPEED//2, 0),  # Down
-    "palm": (-SPEED, 0, 0, 0),  # Backward
-    "fist": (SPEED, 0, 0, 0),  # Forward
-    "three": (0, SPEED, 0, 0),  # Right
-    "two_up": (0, -SPEED, 0, 0),  # Left
-    "peace": (0, 0, 0, SPEED),  # Rotate Right
-    "ok": (0, 0, 0, -SPEED),  # Rotate Left
-    "mute": (0, 0, 0, 0),  # Hover
-}
+# Speed control
+SPEED = 30
+
+def adjust_speed(gesture):
+    """Adjusts the drone's speed based on the detected gesture."""
+    global SPEED
+    if gesture == "four":
+        SPEED = min(SPEED + 5, 90)
+        print(f"Speed increased to {SPEED}")
+    elif gesture == "one":
+        SPEED = max(20, SPEED - 5)  # Prevents SPEED from going below 5
+        print(f"Speed decreased to {SPEED}")
+
+
+def get_gesture_command(gesture):
+    """Dynamically returns the movement tuple based on the updated SPEED."""
+    gesture_to_cmd = {
+        "like": (0, 0, SPEED, 0),  # Up
+        "dislike": (0, 0, -SPEED, 0),  # Down
+        "fist": (-SPEED, 0, 0, 0),  # Backward
+        "palm": (SPEED, 0, 0, 0),  # Forward
+        "three": (0, SPEED, 0, 0),  # Right
+        "two_up": (0, -SPEED, 0, 0),  # Left
+        "peace": (0, 0, 0, SPEED),  # Rotate Right
+        "ok": (0, 0, 0, -SPEED),  # Rotate Left
+        "stop": (0, 0, 0, 0),  # Hover
+    }
+    return gesture_to_cmd.get(gesture, (0, 0, 0, 0))  # Default to hover
+
 gesture_to_string = {
     "peace": "Rotate Right",
     "ok": "Rotate Left",
-    "palm": "Backward",
-    "fist": "Forward",
+    "fist": "Backward",
+    "palm": "Forward",
     "three": "Right",
     "two_up": "Left",
     "like": "Up",
-    "dislike":"Down",
-    # "peace_inverted": (SPEED, 0, 0, 0), #Forward,
-    "mute": "Hover",
-    # "palm": (SPEED, 0, 0, 0), #Forward
-    # "rock": (-SPEED, 0, 0, 0), #Backward
+    "dislike": "Down",
+    "stop": "Hover",
+    "four": "Increase Speed by 5",
+    "one": "Decrease Speed by 5",
+    "mute":"Sounding Buzzer",
+    "call":"Ending..."
 }
 
 def execute_command(gesture):
-    """Executes the drone movement based on gesture input asynchronously."""
-    if gesture in gesture_to_cmd:
-        pitch, roll, throttle, yaw = gesture_to_cmd[gesture]
+    """Executes the drone movement based on the gesture asynchronously."""
+    adjust_speed(gesture)  # Adjust speed before getting the command
+
+    if gesture in gesture_to_string and gesture not in ["four", "one", "call", "mute"]:  # Ignore speed adjustment gestures
+        pitch, roll, throttle, yaw = get_gesture_command(gesture)
 
         def run_movement():
             drone.set_pitch(pitch)
@@ -52,10 +70,16 @@ def execute_command(gesture):
 
         movement_thread = threading.Thread(target=run_movement)
         movement_thread.start()
-    else:
-        print("Gesture not recognized.")
+    elif gesture == "mute":
+        drone.drone_buzzer(400, 300)
 
-# Load model and labels
+    elif gesture == "call":
+        print("STOPPING")
+        raise Exception
+    else:
+        print(f"Speed changed, no direct movement for gesture: {gesture}")
+
+# Load YOLO model
 model = YOLO(os.path.join(os.path.abspath(".."), configs.YOLO_MODEL))
 
 # Start video capture
@@ -68,34 +92,23 @@ try:
 
     for orig in results:
         frame = orig.plot()
-        cv2.imshow("YOLOv8 Webcam Inference", frame)
         labels = orig.names
 
         if len(orig.boxes) > 0:
             first_box = orig.boxes[0]
             class_id = int(first_box.cls)
             label = labels[class_id]
-            print(f"Detected (first object): {label}")
+            print(f"Detected: {label}")
 
-            if label in gesture_to_cmd:
+            if label in gesture_to_string:
+
                 gesture_text = f"{label}: {gesture_to_string[label]}"
-                print(f"Detected gesture: {gesture_text}")
+                print(f"Executing gesture: {gesture_text}")
 
-                cv2.putText(
-                    frame,
-                    gesture_text,
-                    (50, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 255, 0),
-                    2,
-                    cv2.LINE_AA
-                )
+                cv2.putText(frame, gesture_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 10, (0, 0, 0), 2, cv2.LINE_AA)
                 execute_command(label)
-            else:
-                print(f"No command mapped for: {label}")
 
-        cv2.imshow("Frame With Gestures Displayed", frame)
+        cv2.imshow("Gesture Detection", frame)
         if cv2.waitKey(100) & 0xFF == ord('q'):
             break
 
