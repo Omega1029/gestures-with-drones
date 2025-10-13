@@ -1,3 +1,5 @@
+import traceback
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -137,6 +139,7 @@ try:
 except KeyboardInterrupt:
     pass
 except Exception as e:
+    print(traceback.print_exc())
     print(e)
 finally:
     print("\nLanding due to interruption...")

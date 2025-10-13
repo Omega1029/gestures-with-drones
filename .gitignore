@@ -11,3 +11,6 @@ yolo
 test.py
 ros_practice
 __pycache__
+main.py
+test/
+dynamic_gestures/
